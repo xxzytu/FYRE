@@ -1,0 +1,77 @@
+#include <Servo.h>
+#include <SoftwareSerial.h>
+#include <ArduinoHttpClient.h>
+#include <Adafruit_FONA.h>
+
+const int gasSensorPin = A1;
+const int buzzerPin = 8;
+const int servoPin = 11;
+
+Servo myServo; 
+
+SoftwareSerial fonaSerial(6, 7);
+Adafruit_FONA fona = Adafruit_FONA(7);
+
+HttpClient client = HttpClient(fonaSerial, "https://api.thingspeak.com/update?api_key=RXZV81446DWLXD46&field1=0");
+
+void setup() {
+  Serial.begin(9600);
+  fonaSerial.begin(9600);
+
+  pinMode(gasSensorPin, INPUT);
+  pinMode(buzzerPin, OUTPUT);
+  myServo.attach(servoPin);  
+
+  if (!fona.begin(fonaSerial)) {
+    Serial.println(F("Couldn't find FONA"));
+    while (1);
+  }
+}
+
+void loop() {
+  int gasLevel = analogRead(gasSensorPin); 
+
+  if (gasLevel > 10) {  
+    activateBuzzer(); 
+    rotateServo();  
+
+    initiateCall();  
+  }
+
+  delay(1000);
+}
+
+void activateBuzzer() {  
+  digitalWrite(buzzerPin, HIGH);
+  delay(60000);
+  digitalWrite(buzzerPin, LOW);
+  delay(60000);
+}
+
+void rotateServo() {  
+  myServo.write(180);  
+  delay(2000);
+}
+
+void initiateCall() { 
+  Serial.println(F("Making call and API call..."));
+
+  if (!fona.callPhone("+918884869909")) { 
+    Serial.println(F("Failed to call"));
+  } else {
+    Serial.println(F("Call in progress"));
+  }
+
+  delay(10000); 
+
+  String path = "https://api.thingspeak.com/update?api_key=RXZV81446DWLXD46&field1=0";
+  String apiResponse;
+
+  if (client.get(path)) {
+    apiResponse = client.responseBody(); 
+    Serial.println(F("API call successful"));
+    Serial.println(apiResponse); 
+  } else {
+    Serial.println(F("API call failed"));
+  }
+}

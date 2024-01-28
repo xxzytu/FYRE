@@ -1,0 +1,107 @@
+#include <Servo.h>
+#include <SoftwareSerial.h>
+#include <SPI.h>
+#include <Ethernet.h>
+#include <HttpClient.h>
+#include <servo.h>
+
+Servo myservo;
+
+int gasPin = A1; 
+int threshold = 50; 
+int buzzerPin = 10; 
+int servopin = 3;
+
+
+SoftwareSerial sim900Serial(5, 4); // changed RX, TX
+String phoneNumber = "+918073435754"; 
+
+byte mac[] = {0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED}; 
+IPAddress server(192, 168, 1, 100);
+int port = 80;
+
+void setup() {
+  myservo.attach(11); 
+  pinMode(buzzerPin, OUTPUT);
+  Serial.begin(9600);
+  sim900Serial.begin(9600);
+  
+  delay(1000);
+  sendSMS("Gas Leakage Alert: System Started");
+}
+
+{ 
+
+Serial.begin(9600);
+  Ethernet.begin(mac);
+  delay(1000);
+}
+
+void loop() {
+  int gasValue = analogRead(gasPin);
+  
+  Serial.print("Gas Value: ");
+  Serial.println(gasValue);
+  
+  if (gasValue > threshold) {
+    myservo.write(180);  
+    digitalWrite(buzzerPin, HIGH); 
+    delay(1000); 
+    myservo.write(0);  
+    digitalWrite(buzzerPin, LOW); 
+    delay(1000); 
+    
+    sendSMS("Gas Leakage Detected!");
+  }
+
+{
+
+if (makeHttpRequest("/api/endpoint")) {
+    Serial.println("Request successful");
+  } else {
+    Serial.println("Request failed");
+  }
+}
+
+  delay(5000); 
+}
+
+bool makeHttpRequest(String endpoint) {
+  EthernetClient client;
+  delay(5000); 
+}
+
+void sendSMS(String message) {
+  sim900Serial.println("AT+CMGF=1"); 
+  delay(1000);
+  sim900Serial.print("AT+CMGS=1\r");
+  sim900Serial.print(phoneNumber);
+  sim900Serial.println("\");
+  delay(1000);
+  sim900Serial.print(message);
+  delay(100);
+  sim900Serial.write(26); 
+  delay(1000);
+}
+
+
+ if (client.connect(server, port)) {
+    Serial.println("Connected to server");
+
+    client.print("GET " + endpoint + " HTTP/1.1\r\n");
+    client.print("Host: your-api-endpoint.com\r\n");
+    client.print("Connection: close\r\n\r\n");
+
+    delay(500);
+    while (client.available()) {
+      char c = client.read();
+      Serial.print(c);
+    }
+
+    client.stop();
+    return true;
+  } else {
+    Serial.println("Connection failed");
+    return false; 
+  }
+}
