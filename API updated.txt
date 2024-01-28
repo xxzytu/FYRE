@@ -1,0 +1,50 @@
+ #include <WiFi.h>
+#include <ThingSpeak.h>
+
+const char *ssid = "Harvest";
+const char *password = "Harvest2011@";
+const char *apiKey = "RXZV81446DWLXD46";
+const char *Channel id =2413629
+const int gasSensorPin = A0; 
+WiFiClient client;
+
+void setup() {
+  Serial.begin(115200);
+  
+ 
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(1000);
+    Serial.println("Connecting to WiFi...");
+  }
+  Serial.println("Connected to WiFi");
+
+
+  ThingSpeak.begin(client);
+}
+
+void loop() {
+  
+  int gasValue = analogRead(gasSensorPin);
+
+  
+  float voltage = gasValue * (3.3 / 4095.0);
+
+  
+  float gasConcentration = map(voltage, 0, 3.3, 0, 100);
+
+  
+  Serial.print("Gas Concentration: ");
+  Serial.print(gasConcentration);
+  Serial.println(" %");
+
+  
+  int status = ThingSpeak.writeFields(2413629, apiKey);
+  if (status == OK_SUCCESS) {
+    Serial.println("Data sent to ThingSpeak successfully");
+  } else {
+    Serial.println("Failed to send data to ThingSpeak. Check your connection and API key");
+  }
+
+  
+}

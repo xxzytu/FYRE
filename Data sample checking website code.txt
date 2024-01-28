@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fetch Data Sample</title>
+    <style>
+      
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        th, td {
+            border: 1px solid #626262;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+        body{background-color:#e3f4ff;}
+    </style>
+</head>
+<body>
+    <h1>Sample Data from Sensor Database</h1>
+    <div id="data-container"></div>
+
+    <script>
+        const apiUrl = "https://api.thingspeak.com/channels/2413629/fields/1.json?api_key=8HWWF7LMW0ZJJ8G3&results=2";
+
+        fetch(apiUrl)
+            .then(response => response.json())
+            .then(data => {
+                
+                displayData(data);
+            })
+            .catch(error => console.error('Error fetching data:', error));
+
+        function displayData(data) {
+            const container = document.getElementById('data-container');
+
+            if (data && data.channel && data.feeds && data.feeds.length > 0) {
+                const channelName = data.channel.name;
+                const table = document.createElement('table');
+                table.innerHTML = `
+                    <tr>
+                        <th>Sensor Name</th>
+                        <th>Timestamp</th>
+                        <th>Data Value</th>
+                    </tr>
+                `;
+
+                data.feeds.forEach(feed => {
+                    const row = table.insertRow();
+                    row.insertCell(0).textContent = channelName;
+                    row.insertCell(1).textContent = feed.created_at;
+                    row.insertCell(2).textContent = feed.field1;
+                });
+
+                container.appendChild(table);
+            } else {
+                container.innerHTML = "<p>No data available.</p>";
+            }
+        }
+    </script>
+</body>
+</html>
